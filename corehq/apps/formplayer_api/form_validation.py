@@ -47,6 +47,8 @@ def validate_form(form_xml):
         response = requests.post(
             get_formplayer_url() + const.ENDPOINT_VALIDATE_FORM,
             data=form_xml,
+            # patch for now on Sprite, requests not picking up system ca certs
+            verify=False,
             headers={
                 'Content-Type': 'application/xml',
                 'X-MAC-DIGEST': get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, form_xml),
