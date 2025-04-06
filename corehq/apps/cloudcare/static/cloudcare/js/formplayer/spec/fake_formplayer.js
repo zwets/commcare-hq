@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Generates mock formplayer responses. Use as a fake for queryFormplayer.
  *
@@ -17,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", [
     "hqwebapp/js/assert_properties",
 ], function (
     _,
-    AssertProperties
+    AssertProperties,
 ) {
     let module = {},
         apps = {
@@ -39,6 +38,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", [
                             id: 'some_case_id',
                             name: 'Some Case',
                         }],
+                        headers: ['name'],
                         actions: [{
                             title: "Search for Case",
                             queryKey: "search_command.m1",
@@ -110,6 +110,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", [
         if (needEntity) {
             return module.makeEntitiesResponse(_.extend(responseOptions, {
                 entities: currentMenu.entities,
+                headers: currentMenu.headers,
             }));
         } else if (action) {
             return module.makeQueryResponse(_.extend(responseOptions, {

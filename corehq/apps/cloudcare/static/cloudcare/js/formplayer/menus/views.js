@@ -1,10 +1,9 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
     'backbone',
     'backbone.marionette',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
@@ -16,6 +15,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
+    'crypto-js/crypto-js',
+    'mapbox-gl/dist/mapbox-gl',
+    'leaflet',
     'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
 ], function (
     $,
@@ -34,7 +36,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     formplayerUtils,
     markdown,
     cloudcareUtils,
-    L
+    CryptoJS,
+    mapboxgl,
+    L,
 ) {
     const MenuView = Marionette.View.extend({
         isGrid: function () {
@@ -132,6 +136,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                badgeText: this.options.model.attributes.badgeText,
                 menuIndex: this.menuIndex,
             };
         },
@@ -303,6 +308,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             });
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+            this.columnConfigModel = this.options.columnConfigModel;
         },
 
         className: "formplayer-request case-row",
@@ -472,6 +478,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
+                columnConfigModel: this.columnConfigModel,
             };
         },
 
@@ -663,6 +670,107 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         };
     };
 
+    const ColumnConfigModel = Backbone.Model.extend({
+        defaults: function () {
+            return {
+                columnNames: [],
+                columnVisibility: [],
+                columnCanBeVisible: [],
+            };
+        },
+
+        initialize: function (attributes) {
+            const getCanBeVisible = (attributes) => {
+                if (attributes.styles) {
+                    return attributes.styles.map(s => s.widthHint !== 0);
+                } else {
+                    return Array(attributes.columnNames.length).fill(true);
+                }
+            };
+
+            const setFromAttributes = (attributes) => {
+                this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                this.set('columnCanBeVisible', getCanBeVisible(attributes));
+            };
+
+            const shouldInvalidateCache = (attributes, savedModel) => {
+                if (!attributes.styles) { // happens with search first.
+                    return false;
+                }
+                const canBeVisible = getCanBeVisible(attributes);
+                return canBeVisible.length !== savedModel.columnCanBeVisible.length ||
+                    canBeVisible.some((value, index) => value !== savedModel.columnCanBeVisible[index]);
+            };
+            if (attributes) {
+                this.configStorageId = attributes.configStorageId;
+                if (this.configStorageId && localStorage.getItem(this.configStorageId)) {
+                    const savedModel = JSON.parse(localStorage.getItem(this.configStorageId));
+                    if (shouldInvalidateCache(attributes, savedModel)) {
+                        localStorage.removeItem(this.configStorageId);
+                        setFromAttributes(attributes);
+                    } else {
+                        this.set(savedModel);
+                    }
+                } else if (attributes) {
+                    setFromAttributes(attributes);
+                }
+
+                this.on('change', this.saveToLocalStorage, this);
+            }
+        },
+
+        isVisible: function (index) {
+            return this.get('columnVisibility')[index];
+        },
+
+        saveToLocalStorage: function () {
+            if (this.configStorageId) {
+                const modelData = this.toJSON();
+                delete modelData.columnNames; // we don't want to save them in case the user changes languages
+                localStorage.setItem(this.configStorageId, JSON.stringify(modelData));
+            }
+        },
+    });
+
+    const CaseListConfigView = Marionette.View.extend({
+        template: _.template($("#case-list-config-body").html() || ""),
+
+        initialize: function () {
+            this.columnVisibility = this.model.get('columnVisibility').slice();
+        },
+
+        templateContext: function () {
+            return {
+                columnNames: this.model.get('columnNames'),
+                columnVisibility: this.columnVisibility,
+                allColumnsHidden: function () {
+                    return this.columnVisibility.every(hidden => hidden === false);
+                },
+            };
+        },
+
+        events: {
+            'click .js-update': 'onUpdate',
+            'click .js-reset': 'onReset',
+            'change .column-checkbox': 'onCheckboxChange',
+        },
+
+        onUpdate: function () {
+            this.model.set('columnVisibility', this.columnVisibility);
+            this.trigger('save', this.model);
+        },
+
+        onReset: function () {
+            this.columnVisibility.fill(true);
+            this.render();
+        },
+
+        onCheckboxChange: function (e) {
+            this.columnVisibility[e.currentTarget.value] = e.currentTarget.checked;
+            this.render();
+        },
+    });
+
     const CaseListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#case-view-list-template").html() || ""),
@@ -673,7 +781,81 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return {
                 styles: this.options.styles,
                 endpointActions: this.options.endpointActions,
+                columnConfigModel: this.columnConfigModel,
             };
+        },
+
+        regions: {
+            configModalRegion: '.js-config-modal-content',
+        },
+
+        onRender: function () {
+            const self = this;
+            const configButton = this.$('#case-list-config-button');
+            if (configButton.length) {
+                const caseListConfigViewPopover = new bootstrap.Popover(configButton[0], {
+                    html: true,
+                    sanitize: false,
+                    content: function () {
+                        self.caseListConfigView = new CaseListConfigView({
+                            model: self.columnConfigModel,
+                        });
+                        const container = document.createElement('div');
+                        self.caseListConfigView.setElement(container);
+                        self.caseListConfigView.render();
+
+                        self.listenTo(self.caseListConfigView, 'save', function () {
+                            caseListConfigViewPopover.dispose();
+                            // save map
+                            const initialixedMapEl = self.$('#module-case-list-map')[0];
+
+                            self.render();
+
+                            // Replace the map element with the initial map element
+                            const newMapEl = self.$('#module-case-list-map')[0];
+                            newMapEl.parentNode.replaceChild(initialixedMapEl, newMapEl);
+                        });
+
+                        return container;
+                    },
+                    placement: 'auto',
+                    trigger: 'click',
+                });
+
+                document.addEventListener('click', function (event) {
+                    if ($(event.target).closest('.popover').length) {
+                        if (!$(event.target).hasClass('js-action') &&
+                                !$(event.target).closest('.js-action').length) {
+                            event.stopPropagation();
+                        }
+                    } else {
+                        caseListConfigViewPopover.hide();
+                    }
+                }, true);
+
+                configButton[0].addEventListener('shown.bs.popover', function () {
+                    const popover = document.querySelector('.popover');
+                    if (popover) {
+                        const firstCheckbox = popover.querySelector('.column-checkbox');
+                        if (firstCheckbox) {
+                            firstCheckbox.focus();
+                        }
+                    }
+                });
+            }
+        },
+
+        getConfigStorageId: function (user) {
+            const urlObject = formplayerUtils.currentUrlToObject();
+            const selectionsWithoutUuid = urlObject.selections.map(function (s) {
+                if (s.match('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$')) {
+                    return 'uuid';
+                } else {
+                    return s;
+                }
+            });
+            const configStorageId = `${urlObject.appId}:${JSON.stringify(selectionsWithoutUuid)}:${user.username}`;
+            return CryptoJS.enc.Hex.stringify(CryptoJS.SHA512(configStorageId));
         },
 
         initialize: function (options) {
@@ -684,6 +866,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
+            const user = UsersModels.getCurrentUser();
+            const configStorageId = this.getConfigStorageId(user);
+            self.columnConfigModel = new ColumnConfigModel({
+                columnNames: self.headers,
+                configStorageId: configStorageId,
+                styles: self.styles,
+            });
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -691,7 +880,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
@@ -873,7 +1061,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/bootstrap5/alert_user"], function (alertUser) {
+                import("hqwebapp/js/bootstrap5/alert_user").then(function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -937,7 +1125,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
                 const addressIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
                 const popupIndex = _.findIndex(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS_POPUP; });
-                L.mapbox.accessToken = token;
+                mapboxgl.accessToken = token;
 
                 const allCoordinates = [];
                 const markers = [];
@@ -1057,11 +1245,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.scrollContainer.off('scroll', self.boundHandleScroll);
         },
 
+        onBeforeDestroy: function () {
+            if (this.caseListConfigView) {
+                this.caseListConfigView.destroy();
+            }
+        },
+
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(
                 this.options.currentPage,
                 this.options.pageCount,
-                this.options.collection.length
+                this.options.collection.length,
             );
             const casesPerPage = parseInt($.cookie("cases-per-page-limit")) || (this.smallScreenEnabled ? 5 : 10);
             let description = this.options.description;
@@ -1075,6 +1269,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
+                columnConfigModel: this.columnConfigModel,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
@@ -1098,7 +1293,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     return this.sortIndices.indexOf(index) > -1;
                 },
                 columnVisible: function (index) {
-                    return !(this.widthHints && this.widthHints[index] === 0);
+                    return !(this.widthHints && this.widthHints[index] === 0) && this.columnConfigModel.isVisible(index);
                 },
             });
         },
@@ -1150,6 +1345,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         onRender: function () {
+            MultiSelectCaseListView.__super__.onRender.apply(this);
             this.reconcileMultiSelectUI();
         },
     });
@@ -1340,7 +1536,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             'click .js-home': 'onClickHome',
             'keydown .js-home': 'onKeyActionHome',
         },
-        onClickHome: function () {
+        onClickHome: function (e) {
+            e.preventDefault();
             if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
                 return;
             }
@@ -1364,15 +1561,19 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         tagName: "li",
         template: _.template($("#language-option-template").html() || ""),
         events: {
-            'click': 'onChangeLang',
             'keydown .lang': 'onKeyActionChangeLang',
         },
+        triggers: {
+            click: 'change:lang',
+        },
         initialize: function (options) {
+            this.isLangSelected = options.model.get('lang_code') === options.currentLang;
             this.languageOptionsEnabled = options.languageOptionsEnabled;
         },
         templateContext: function () {
             return {
                 languageOptionsEnabled: this.languageOptionsEnabled,
+                isLangSelected: this.isLangSelected,
             };
         },
         onKeyActionChangeLang: function (e) {
@@ -1380,9 +1581,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.onChangeLang(e);
             }
         },
-        onChangeLang: function (e) {
-            const lang = e.target.id;
-            $.publish('formplayer.change_lang', lang);
+        onChangeLang: function (view, e) {
+            if (!this.isLangSelected) {
+                const lang = e.target.id;
+                $.publish('formplayer.change_lang', lang);
+            }
         },
     });
 
@@ -1414,9 +1617,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         behaviors: {
             print: printBehavior,
         },
+        childViewEvents: {
+            'change:lang': 'render',
+        },
         childViewOptions: function () {
             return {
                 languageOptionsEnabled: Boolean(this.options.collection),
+                currentLang: UsersModels.getCurrentUser().displayOptions.language,
             };
         },
         templateContext: function () {
@@ -1572,30 +1779,33 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             'click #app-main': 'onClickAppMain',
         },
         handleSmallScreenChange: function (smallScreenEnabled) {
-            const offcanvas = 'offcanvas';
-            const collapse = 'collapse';
-            const containerDesktopClasses = collapse + ' position-relative';
-            const containerMobileClasses = offcanvas + ' offcanvas-start';
-            if (smallScreenEnabled) {
-                $('#persistent-menu-container').removeClass(containerDesktopClasses + ' show');
-                $('#persistent-menu-container').addClass(containerMobileClasses);
-                $('#persistent-menu-arrow-toggle').attr('aria-expanded', false);
-                $('#persistent-menu-close-button').removeAttr('data-bs-toggle');
-                $('#persistent-menu-close-button').attr('data-bs-dismiss', offcanvas);
-                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', offcanvas);
-            } else {
-                $('#persistent-menu-container').removeClass(containerMobileClasses);
-                $('#persistent-menu-container').addClass(containerDesktopClasses);
-                if (sessionStorage.showPersistentMenu !== 'false') {
-                    $('#persistent-menu-container').addClass('show');
+            if (sessionStorage.showPersistentMenu) {
+                if (smallScreenEnabled) {
+                    this.makeOffcanvas();
+                } else {
+                    this.makeCollapse();
                 }
-                $('#persistent-menu-arrow-toggle').attr('aria-expanded', true);
-                $('#persistent-menu-close-button').removeAttr('data-bs-dismiss');
-                $('#persistent-menu-close-button').attr('data-bs-toggle', collapse);
-                $('#persistent-menu-arrow-toggle').attr('data-bs-toggle', collapse);
             }
         },
-        initialize: function () {
+        makeOffcanvas: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerCollapseClasses);
+            persistentMenuContainer.addClass(this.containerOffCanvasClasses);
+        },
+        makeCollapse: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass(this.containerOffCanvasClasses);
+            persistentMenuContainer.addClass(this.collapse);
+        },
+        initialize: function (options) {
+            $('#persistent-menu-region').removeClass('d-none');
+            this.sidebarEnabled = options.sidebarEnabled;
+            this.menuExpanded;
+            this.splitScreenToggleEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+            this.offcanvas = 'offcanvas';
+            this.collapse = 'collapse';
+            this.containerCollapseClasses = this.collapse + ' position-relative';
+            this.containerOffCanvasClasses = this.offcanvas + ' offcanvas-start';
             self.smallScreenListener = cloudcareUtils.smallScreenListener(smallScreenEnabled => {
                 this.handleSmallScreenChange(smallScreenEnabled);
             });
@@ -1604,14 +1814,156 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
+        calcPersistantMenuRegionWidth: function () {
+            const contentPlusContainer = $('#content-plus-persistent-menu-container');
+
+            const persistentMenuRegionClone = $('#persistent-menu-region').clone();
+            persistentMenuRegionClone.attr("id","pmr-clone");
+            persistentMenuRegionClone.prependTo(contentPlusContainer);
+
+            const containerClone = persistentMenuRegionClone.find('#persistent-menu-container');
+            containerClone.attr("id","pmc-clone");
+            containerClone.css({'width': '', 'padding': '1.5rem', 'visibility': 'hidden'});
+            containerClone.removeClass('position-absolute');
+            containerClone.addClass('position-relative');
+
+            const containerContentClone = containerClone.find('#persistent-menu-container-content');
+            containerContentClone.attr("id","pmcc-clone");
+            containerContentClone.removeClass('d-none');
+
+            const regionWidth = persistentMenuRegionClone.outerWidth();
+
+            persistentMenuRegionClone.remove();
+
+            return regionWidth;
+        },
+        getPersistantMenuRegionWidth: function () {
+            let persistantMenuRegionWidth = sessionStorage.getItem('persistantMenuRegionWidth');
+            if (!persistantMenuRegionWidth || persistantMenuRegionWidth === '0') {
+                persistantMenuRegionWidth = this.calcPersistantMenuRegionWidth();
+                sessionStorage.setItem('persistantMenuRegionWidth', persistantMenuRegionWidth);
+            }
+            return persistantMenuRegionWidth;
+        },
+        showMenu: function (firstLoad = false) {
+            const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
+            const persistentMenuContainer = $('#persistent-menu-container');
+            if (sessionStorage.showPersistentMenu === "false") {
+                persistentMenuContainer.css('transition', 'width 0.25s');
+            }
+            if (firstLoad) {
+                $('#persistent-menu-container-content').removeClass('d-none');
+            }
+            persistentMenuContainer.css('width', persistantMenuRegionWidth);
+            this.menuExpanded = true;
+        },
+        hideMenu: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.css('transition', 'width 0.25s');
+            persistentMenuContainer.css('width', '100%');
+            $('#persistent-menu-container-content').addClass('d-none');
+            this.menuExpanded = false;
+        },
+        menuCollapseExpandTransitionListener: function () {
+            const persistentMenuContentContainer = $('#persistent-menu-container-content');
+            const targetElement = $('#persistent-menu-container')[0];
+            targetElement.addEventListener('transitionend', (event) => {
+                if (this.menuExpanded && event.target === targetElement) {
+                    persistentMenuContentContainer.removeClass('d-none');
+                }
+            });
+        },
+        cloudcareNotificationListener: function () {
+            const persistentMenuContainer = $('#persistent-menu-container');
+            const cloudcareNotifications = $("#cloudcare-notifications");
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList') {
+                        if (cloudcareNotifications.children().length > 0) {
+                            persistentMenuContainer.addClass('border-top');
+                        } else {
+                            persistentMenuContainer.removeClass('border-top');
+                        }
+                    }
+                });
+            });
+            observer.observe(cloudcareNotifications[0], { childList: true });
+        },
+        lockMenu: function () {
+            const persistantMenuRegionWidth = this.getPersistantMenuRegionWidth();
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuRegion.css('width', persistantMenuRegionWidth);
+            persistentMenuContainer.removeClass('position-absolute');
+            persistentMenuContainer.addClass('position-relative');
+            sessionStorage.showPersistentMenu = true;
+        },
+        unlockMenu: function () {
+            const persistentMenuRegion = $('#persistent-menu-region');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            persistentMenuContainer.removeClass('position-relative');
+            persistentMenuContainer.addClass('position-absolute');
+            persistentMenuRegion.css('width', '');
+            sessionStorage.showPersistentMenu = false;
+        },
+        flipArrowRight: function () {
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-left');
+            arrowToggle.find('i').addClass('fa-chevron-right');
+        },
+        flipArrowLeft: function () {
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            arrowToggle.find('i').removeClass('fa-chevron-right');
+            arrowToggle.find('i').addClass('fa-chevron-left');
+        },
         onAttach: function () {
-            this.handleSmallScreenChange(cloudcareUtils.smallScreenIsEnabled());
-            $('#persistent-menu-container').on('hidden.bs.collapse', function () {
-                sessionStorage.showPersistentMenu = false;
+            const self = this;
+            const smallScreenEnabledOnStartup = cloudcareUtils.smallScreenIsEnabled();
+            const arrowToggle = $('#persistent-menu-arrow-toggle');
+            const persistentMenuContainer = $('#persistent-menu-container');
+            self.makeCollapse(sessionStorage.showPersistentMenu);
+            self.menuCollapseExpandTransitionListener();
+            self.cloudcareNotificationListener();
+            if ($("#cloudcare-notifications").children().length > 0) {
+                persistentMenuContainer.addClass('border-top');
+            }
+
+            if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
+                self.hideMenu();
+                self.unlockMenu();
+                self.flipArrowRight();
+                sessionStorage.setItem('handledDefaultClosed', true);
+            } else if (sessionStorage.showPersistentMenu === 'true' && !smallScreenEnabledOnStartup) {
+                self.showMenu(true);
+                self.flipArrowLeft();
+                self.lockMenu();
+            }
+            arrowToggle.click(function () {
+                if (!self.menuExpanded) {
+                    self.showMenu();
+                    self.flipArrowLeft();
+                    self.lockMenu();
+                } else if (self.menuExpanded && sessionStorage.showPersistentMenu === 'true') {
+                    self.hideMenu();
+                    self.unlockMenu();
+                    self.flipArrowRight();
+                } else if (self.menuExpanded && sessionStorage.showPersistentMenu !== 'true') {
+                    self.flipArrowLeft();
+                    self.lockMenu();
+                }
             });
-            $('#persistent-menu-container').on('show.bs.collapse', function () {
-                sessionStorage.showPersistentMenu = true;
-            });
+            persistentMenuContainer.hover(
+                function () {
+                    if (!self.menuExpanded && !arrowToggle.is(':hover')) {
+                        self.showMenu();
+                    }
+                },
+                function () {
+                    if (sessionStorage.showPersistentMenu !== 'true') {
+                        self.hideMenu();
+                    }
+                },
+            );
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
@@ -1673,5 +2025,4 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return new PersistentMenuView(options);
         },
     };
-})
-;
+});

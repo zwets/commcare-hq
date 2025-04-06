@@ -12,6 +12,7 @@
 
 
 /.github/ @orangejenny
+/.github/workflows/ @dimagi/dependency-watchers
 
 /corehq/blobs/ @millerdev
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
@@ -47,6 +48,7 @@
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/domain/views/accounting.py @nospame
 /corehq/apps/es/ @esoergel @amitphulera
+/corehq/apps/geospatial/ @zandre-eng
 /corehq/apps/hqcase/ @esoergel
 /corehq/apps/hqwebapp/ @orangejenny @biyeun
 /corehq/apps/hqwebapp/apps.py @gherceg

@@ -3,16 +3,17 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
-import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
+import simplejson
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
+from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -20,15 +21,13 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
-    SMALL_INVOICE_THRESHOLD,
     UNLIMITED_FEATURE_USAGE,
     BillingAccount,
-    BillingRecord,
     BillingAccountWebUserHistory,
+    BillingRecord,
     CreditLine,
     CustomerBillingRecord,
     CustomerInvoice,
-    DefaultProductPlan,
     DomainUserHistory,
     EntryPoint,
     FeatureType,
@@ -51,8 +50,10 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     months_from_date,
 )
-from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
-from corehq.apps.domain.utils import get_serializable_wire_invoice_general_credit
+from corehq.apps.domain.dbaccessors import deleted_domain_exists, domain_exists
+from corehq.apps.domain.utils import (
+    get_serializable_wire_invoice_general_credit,
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,
@@ -84,7 +85,6 @@ class DomainInvoiceFactory(object):
 
     def create_invoices(self):
         all_subscriptions = self._get_subscriptions()
-        self._ensure_full_coverage(all_subscriptions)
         chargeable_subscriptions = [sub for sub in all_subscriptions
                                     if sub.plan_version.plan.edition != SoftwarePlanEdition.PAUSED]
         for subscription in chargeable_subscriptions:
@@ -110,47 +110,6 @@ class DomainInvoiceFactory(object):
             date_start__lte=self.date_end,
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
-
-    @transaction.atomic
-    def _ensure_full_coverage(self, subscriptions):
-        plan_version = DefaultProductPlan.get_default_plan_version()
-        if not plan_version.feature_charges_exist_for_domain(self.domain):
-            return
-
-        community_ranges = self._get_community_ranges(subscriptions)
-        if not community_ranges:
-            return
-
-        # First check to make sure none of the existing subscriptions is set
-        # to do not invoice. Let's be on the safe side and not send a
-        # community invoice out, if that's the case.
-        do_not_invoice = any([s.do_not_invoice for s in subscriptions])
-
-        account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name,
-            created_by=self.__class__.__name__,
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
-        if account.date_confirmed_extra_charges is None:
-            log_accounting_info(
-                "Did not generate invoice because date_confirmed_extra_charges "
-                "was null for domain %s" % self.domain.name
-            )
-            do_not_invoice = True
-
-        for start_date, end_date in community_ranges:
-            # create a new community subscription for each
-            # date range that the domain did not have a subscription
-            community_subscription = Subscription(
-                account=account,
-                plan_version=plan_version,
-                subscriber=self.subscriber,
-                date_start=start_date,
-                date_end=end_date,
-                do_not_invoice=do_not_invoice,
-            )
-            community_subscription.save()
-            subscriptions.append(community_subscription)
 
     def _create_invoice_for_subscription(self, subscription):
         def _get_invoice_start(sub, date_start):
@@ -193,34 +152,6 @@ class DomainInvoiceFactory(object):
             record.save()
 
         return invoice
-
-    def _get_community_ranges(self, subscriptions):
-        community_ranges = []
-        if len(subscriptions) == 0:
-            return [(self.date_start, self.date_end + datetime.timedelta(days=1))]
-        else:
-            prev_sub_end = self.date_end
-            for ind, sub in enumerate(subscriptions):
-                if ind == 0 and sub.date_start > self.date_start:
-                    # the first subscription started AFTER the beginning
-                    # of the invoicing period
-                    community_ranges.append((self.date_start, sub.date_start))
-
-                if prev_sub_end < self.date_end and sub.date_start > prev_sub_end:
-                    community_ranges.append((prev_sub_end, sub.date_start))
-                prev_sub_end = sub.date_end
-
-                if (
-                    ind == len(subscriptions) - 1
-                    and sub.date_end is not None
-                    and sub.date_end <= self.date_end
-                ):
-                    # the last subscription ended BEFORE the end of
-                    # the invoicing period
-                    community_ranges.append(
-                        (sub.date_end, self.date_end + datetime.timedelta(days=1))
-                    )
-            return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
         # use create_or_get when is_hidden_to_ops is False to utilize unique index on Invoice
@@ -283,10 +214,11 @@ class DomainInvoiceFactory(object):
 
 class DomainWireInvoiceFactory(object):
 
-    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, account=None):
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, cc_emails=None, account=None):
         self.date_start = date_start
         self.date_end = date_end
         self.contact_emails = contact_emails
+        self.cc_emails = cc_emails
         self.domain = ensure_domain_instance(domain)
         self.logged_throttle_error = False
         if self.domain is None:
@@ -353,17 +285,22 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, amount, general_credit):
+    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_start, date_end):
 
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
-        serializable_items = get_serializable_wire_invoice_general_credit(general_credit)
+        serializable_items = get_serializable_wire_invoice_general_credit(
+            amount, credit_label, unit_cost, quantity
+        )
 
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
             amount=serializable_amount,
             invoice_items=serializable_items,
-            contact_emails=self.contact_emails
+            date_start=date_start,
+            date_end=date_end,
+            contact_emails=self.contact_emails,
+            cc_emails=self.cc_emails,
         )
 
 
