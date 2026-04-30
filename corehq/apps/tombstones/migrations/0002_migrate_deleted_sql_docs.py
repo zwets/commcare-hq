@@ -48,7 +48,7 @@ def copy_deleted_sql_docs_to_tombstones(apps, schema_editor):
 def _bulk_save(by_shard):
     for db_alias, tombstones in by_shard.items():
         if tombstones:
-            Tombstone.objects.using(db_alias).bulk_create(tombstones)
+            Tombstone.objects.using(db_alias).bulk_create(tombstones, ignore_conflicts=True)
     by_shard.clear()
 
 
