@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 
-from ..metric_registry import DomainContext
 from corehq.apps.sso.models import LoginEnforcementType
 
 from ..feature_calcs import (
@@ -15,6 +14,7 @@ from ..feature_calcs import (
     calc_mobile_user_groups,
     calc_user_profiles,
 )
+from ..metric_registry import DomainContext
 
 
 def _make_domain_context(apps=None, **domain_attrs):

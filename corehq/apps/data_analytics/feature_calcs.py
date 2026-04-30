@@ -18,10 +18,13 @@ from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.locations.models import LocationType
 from corehq.apps.saved_reports.models import ReportConfig
-from corehq.apps.sso.models import IdentityProvider, TrustedIdentityProvider, LoginEnforcementType
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    LoginEnforcementType,
+    TrustedIdentityProvider,
+)
 
 from .metric_registry import MetricDef
-
 
 # Application Feature metric calculations
 
