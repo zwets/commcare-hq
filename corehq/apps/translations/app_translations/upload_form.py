@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 from lxml import etree
 from lxml.etree import Element, XMLSyntaxError
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
@@ -18,6 +19,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_unicode_dicts,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+from corehq.toggles import LOCKED_ADMIN_QUESTIONS, NAMESPACE_DOMAIN
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
@@ -84,21 +86,31 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         # Skip labels that have no translation provided
         label_ids_to_skip = self._get_label_ids_to_skip(rows)
 
+        locked_label_ids = set()
+        if (
+            domain_has_privilege(self.app.domain, 'locked_admin_questions')
+            and LOCKED_ADMIN_QUESTIONS.enabled(self.app.domain, namespace=NAMESPACE_DOMAIN)
+        ):
+            locked_label_ids = self._get_locked_label_ids(rows)
+
         # Update the translations
         for lang in self.langs:
             translation_element = self.itext.find("./{f}translation[@lang='%s']" % lang)
             assert translation_element.exists()
 
             for row in rows:
-                if row['label'] in label_ids_to_skip:
+                label_id = row['label']
+                if label_id in label_ids_to_skip:
                     continue
-                if row['label'] == 'submit_label':
+                if label_id in locked_label_ids:
+                    continue
+                if label_id == 'submit_label':
                     try:
                         self.form.submit_label[lang] = row[self._get_col_key('default', lang)]
                     except KeyError:
                         pass
                     continue
-                if row['label'] == 'submit_notification_label':
+                if label_id == 'submit_notification_label':
                     notification_value = ''
                     try:
                         notification_value = row[self._get_col_key('default', lang)]
@@ -193,6 +205,31 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                     messages.error,
                     _("You must provide at least one translation for the label '{}'.").format(label)))
         return label_ids_to_skip
+
+    def _get_locked_label_ids(self, rows):
+        locked_label_refs = set()
+        for question in self.form.get_questions(
+            self.langs,
+            include_triggers=True,
+            include_groups=True,
+            include_fixtures=True,
+            include_locked_status=True,
+        ):
+            if not question.get('locked'):
+                continue
+
+            locked_label_refs.add(question.get('label_ref'))
+            locked_label_refs.add(question.get('constraintMsg_ref'))
+
+            for option in question.get('options', []):
+                locked_label_refs.add(option.get('label_ref'))
+
+            data_source = question.get('data_source', {})
+            locked_label_refs.add(data_source.get('label_ref'))
+
+        # rather than bog down question iteration, just discard None if it was added
+        locked_label_refs.discard(None)
+        return locked_label_refs & {row['label'] for row in rows}
 
     def _get_text_node(self, translation_node, label_id):
         text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
