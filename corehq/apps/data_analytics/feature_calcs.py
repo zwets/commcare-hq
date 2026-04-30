@@ -18,7 +18,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.locations.models import LocationType
 from corehq.apps.saved_reports.models import ReportConfig
-from corehq.apps.sso.models import IdentityProvider, TrustedIdentityProvider
+from corehq.apps.sso.models import IdentityProvider, TrustedIdentityProvider, LoginEnforcementType
 
 from .metric_registry import MetricDef
 
@@ -236,7 +236,8 @@ def calc_has_sso(domain_context):
     - it trusts an active IdentityProvider owned by another account.
     """
     acct = BillingAccount.get_account_by_domain(domain_context.domain)
-    if IdentityProvider.objects.filter(owner=acct, is_active=True).exists():
+    idp = IdentityProvider.objects.filter(owner=acct, is_active=True).first()
+    if idp and idp.login_enforcement_type == LoginEnforcementType.GLOBAL:
         return True
     return TrustedIdentityProvider.objects.filter(
         domain=domain_context.domain,

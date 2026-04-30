@@ -3,6 +3,8 @@ from unittest.mock import MagicMock, patch
 from django.test import SimpleTestCase
 
 from ..metric_registry import DomainContext
+from corehq.apps.sso.models import LoginEnforcementType
+
 from ..feature_calcs import (
     calc_has_2fa_required,
     calc_has_organization,
@@ -169,15 +171,29 @@ _feature_calcs = 'corehq.apps.data_analytics.feature_calcs'
 @patch(f'{_feature_calcs}.TrustedIdentityProvider.objects')
 @patch(f'{_feature_calcs}.IdentityProvider.objects')
 class TestCalcHasSso(SimpleTestCase):
-    def test_true_when_billing_account_has_active_idp(
+    def test_true_when_billing_account_idp_globally_enforced(
         self,
         mock_idp,
         mock_trusted,
         mock_get_owner,
     ):
         mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.exists.return_value = True
-        mock_trusted.filter.return_value.exists.return_value = False
+        idp = MagicMock(login_enforcement_type=LoginEnforcementType.GLOBAL)
+        mock_idp.filter.return_value.first.return_value = idp
+        ctx = _make_domain_context()
+        assert calc_has_sso(ctx) is True
+        mock_trusted.filter.assert_not_called()
+
+    def test_falls_back_to_trusted_when_billing_account_idp_in_test_mode(
+        self,
+        mock_idp,
+        mock_trusted,
+        mock_get_owner,
+    ):
+        mock_get_owner.return_value = MagicMock()
+        idp = MagicMock(login_enforcement_type=LoginEnforcementType.TEST)
+        mock_idp.filter.return_value.first.return_value = idp
+        mock_trusted.filter.return_value.exists.return_value = True
         ctx = _make_domain_context()
         assert calc_has_sso(ctx) is True
 
@@ -188,7 +204,7 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner,
     ):
         mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.exists.return_value = False
+        mock_idp.filter.return_value.first.return_value = None
         mock_trusted.filter.return_value.exists.return_value = True
         ctx = _make_domain_context()
         assert calc_has_sso(ctx) is True
@@ -200,7 +216,7 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner,
     ):
         mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.exists.return_value = False
+        mock_idp.filter.return_value.first.return_value = None
         mock_trusted.filter.return_value.exists.return_value = False
         ctx = _make_domain_context()
         assert calc_has_sso(ctx) is False
