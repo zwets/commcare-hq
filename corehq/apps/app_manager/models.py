@@ -2235,9 +2235,10 @@ class CaseSearch(DocumentSchema):
     Removed fields (do not reuse):
     - again_label: Removed with SSCS migration (Feb 2026)
     - search_again_label: Removed with SSCS migration (Feb 2026)
-      These fields may still exist in CouchDB documents but are no longer used.
+    - dynamic_search: Removed deprecated functionality (Apr 2026)
     - command_label: Superseded by search_label (2021 migration)
     - search_label: Removed; search button always uses default label (Apr 2026)
+    - search_filter: Removed with USH_SEARCH_FILTER toggle (Apr 2026)
       These fields may still exist in CouchDB documents but are no longer used.
     """
     search_button_label = LabelProperty(default={'en': 'Search All Cases'})
@@ -2245,7 +2246,6 @@ class CaseSearch(DocumentSchema):
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
     additional_relevant = StringProperty(exclude_if_none=True)  # in "addition" to the default relevancy condition
-    search_filter = StringProperty(exclude_if_none=True)
     search_button_display_condition = StringProperty(exclude_if_none=True)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
     custom_sort_properties = SchemaListProperty(CaseSearchCustomSortProperty)
@@ -2257,7 +2257,6 @@ class CaseSearch(DocumentSchema):
     title_label = LabelProperty(default={})
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
-    dynamic_search = BooleanProperty(default=False)
     search_on_clear = BooleanProperty(default=False)
 
     # case property referencing another case's ID
@@ -4254,7 +4253,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
         required=False
     )
-    split_screen_dynamic_search = BooleanProperty(default=False)
 
     persistent_menu = BooleanProperty(default=False)
     show_breadcrumbs = BooleanProperty(default=True)
