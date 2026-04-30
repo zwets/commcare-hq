@@ -10,9 +10,12 @@ from unittest.mock import patch
 from couchexport.export import export_raw
 from couchexport.models import Format
 
+from lxml import etree
+
 from corehq.apps.app_manager.models import Application, Module, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.xform import WrappedNode
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
@@ -1581,3 +1584,30 @@ class GetLockedLabelIdsTest(SimpleTestCase):
             mock_form.get_questions.return_value = questions
             locked = self.updater._get_locked_label_ids(rows)
         assert locked == {'locked_q-label'}
+
+
+class TranslationWouldChangeTest(SimpleTestCase):
+    def setUp(self):
+        self.updater = _make_minimal_updater()
+        self.translation_element = WrappedNode(etree.fromstring(
+            '<translation xmlns="http://www.w3.org/2002/xforms" lang="en">'
+            '<text id="q-label"><value>Current</value></text>'
+            '</translation>'
+        ))
+
+    def _row(self, default_en=''):
+        return {'label': 'q-label', 'default_en': default_en}
+
+    def _would_change(self, default_en):
+        return self.updater._translation_would_change(
+            self._row(default_en), 'q-label', self.translation_element, 'en'
+        )
+
+    def test_when_value_differs(self):
+        assert self._would_change('New value')
+
+    def test_when_value_matches(self):
+        assert not self._would_change('Current')
+
+    def test_when_empty_cell_clears_existing_value(self):
+        assert self._would_change('')

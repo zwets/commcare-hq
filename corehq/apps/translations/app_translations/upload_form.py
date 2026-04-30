@@ -87,6 +87,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         label_ids_to_skip = self._get_label_ids_to_skip(rows)
 
         locked_label_ids = set()
+        warned_locked_labels = set()
         if (
             domain_has_privilege(self.app.domain, 'locked_admin_questions')
             and LOCKED_ADMIN_QUESTIONS.enabled(self.app.domain, namespace=NAMESPACE_DOMAIN)
@@ -103,6 +104,17 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 if label_id in label_ids_to_skip:
                     continue
                 if label_id in locked_label_ids:
+                    if (
+                        label_id not in warned_locked_labels
+                        and self._translation_would_change(row, label_id, translation_element, lang)
+                    ):
+                        self.msgs.append((
+                            messages.warning,
+                            _("Translation for '{}' was not updated because the question is locked.").format(
+                                label_id
+                            ),
+                        ))
+                        warned_locked_labels.add(label_id)
                     continue
                 if label_id == 'submit_label':
                     try:
@@ -230,6 +242,23 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         # rather than bog down question iteration, just discard None if it was added
         locked_label_refs.discard(None)
         return locked_label_refs & {row['label'] for row in rows}
+
+    def _translation_would_change(self, row, label_id, translation_element, lang):
+        text_node = translation_element.find("./{f}text[@id='%s']" % label_id)
+        if not text_node.exists():
+            return False
+
+        for trans_type, uploaded_value in self._get_translations_for_row(row, lang).items():
+            if trans_type == 'default':
+                current_node = self._get_value_node(text_node)
+            else:
+                current_node = text_node.find("./{f}value[@form='%s']" % trans_type)
+
+            current_value = (current_node.xml.text or '') if current_node.exists() else ''
+            if uploaded_value != current_value:
+                return True
+
+        return False
 
     def _get_text_node(self, translation_node, label_id):
         text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
