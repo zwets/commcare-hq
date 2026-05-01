@@ -613,7 +613,7 @@ $(function () {
             });
             self.isLocked = ko.pureComputed(function () {
                 const question = self.case_transaction.caseConfig.questionMap[self.path()];
-                return !!(question && question.locked);
+                return question && question.locked;
             });
             return self;
         },
