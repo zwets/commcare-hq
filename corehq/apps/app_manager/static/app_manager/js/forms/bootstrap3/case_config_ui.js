@@ -42,12 +42,7 @@ $(function () {
 
         self.home = params.home;
         self.actions = filterActions(params.actions);
-        self.questions = ko.observable(
-            _.map(params.questions, question => {
-                question.disabled = question.locked;
-                return question;
-            }),
-        );
+        self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;
         // `requires` is a ko observable so it can be read by another UI
         self.requires = params.requires;
@@ -170,7 +165,14 @@ $(function () {
         self.caseConfigViewModel = ko.observable(caseConfigViewModel(self));
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
-            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
+            return caseConfigUtils.getQuestions(
+                self.questions(),
+                filter,
+                excludeHidden,
+                includeRepeat,
+                excludeTrigger,
+                true,  //disableLocked
+            );
         };
 
         self.getAnswers = function (condition) {

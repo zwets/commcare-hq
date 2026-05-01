@@ -40,12 +40,7 @@ $(function () {
         };
 
         self.home = params.home;
-        self.questions = ko.observable(
-            _.map(params.questions, question => {
-                question.disabled = question.locked;
-                return question;
-            }),
-        );
+        self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;
         self.caseType = params.caseType;
         self.module_id = params.module_id;
@@ -173,7 +168,13 @@ $(function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(
+                self.questions(),
+                filter,
+                excludeHidden,
+                includeRepeat,
+                true,  //disableLocked
+            );
         };
 
         self.getAnswers = function (condition) {
