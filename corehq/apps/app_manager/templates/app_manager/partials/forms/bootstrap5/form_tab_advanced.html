@@ -57,10 +57,12 @@
     <div class="card-body">
       <ul class="nav nav-pills nav-stacked">  {# todo B5: css-nav #}
         <li>
-          <a href="#upload-xform" data-bs-toggle="modal">
-            <i class="fa fa-arrow-up"></i>
-            {% trans "Upload" %}
-          </a>
+          {% if allow_xform_upload %}
+            <a href="#upload-xform" data-bs-toggle="modal">
+              <i class="fa fa-arrow-up"></i>
+              {% trans "Upload" %}
+            </a>
+          {% endif %}
         </li>
         <li>
           <a {% if not form.source %}class="disabled"{% endif %}
