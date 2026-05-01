@@ -239,8 +239,11 @@ def calc_has_sso(domain_context):
     - it trusts an active IdentityProvider owned by another account.
     """
     acct = BillingAccount.get_account_by_domain(domain_context.domain)
-    idp = IdentityProvider.objects.filter(owner=acct, is_active=True).first()
-    if idp and idp.login_enforcement_type == LoginEnforcementType.GLOBAL:
+    if IdentityProvider.objects.filter(
+        owner=acct,
+        is_active=True,
+        login_enforcement_type=LoginEnforcementType.GLOBAL,
+    ).exists():
         return True
     return TrustedIdentityProvider.objects.filter(
         domain=domain_context.domain,

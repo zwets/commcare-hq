@@ -178,24 +178,15 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner,
     ):
         mock_get_owner.return_value = MagicMock()
-        idp = MagicMock(login_enforcement_type=LoginEnforcementType.GLOBAL)
-        mock_idp.filter.return_value.first.return_value = idp
+        mock_idp.filter.return_value.exists.return_value = True
         ctx = _make_domain_context()
         assert calc_has_sso(ctx) is True
+        mock_idp.filter.assert_called_once_with(
+            owner=mock_get_owner.return_value,
+            is_active=True,
+            login_enforcement_type=LoginEnforcementType.GLOBAL,
+        )
         mock_trusted.filter.assert_not_called()
-
-    def test_falls_back_to_trusted_when_billing_account_idp_in_test_mode(
-        self,
-        mock_idp,
-        mock_trusted,
-        mock_get_owner,
-    ):
-        mock_get_owner.return_value = MagicMock()
-        idp = MagicMock(login_enforcement_type=LoginEnforcementType.TEST)
-        mock_idp.filter.return_value.first.return_value = idp
-        mock_trusted.filter.return_value.exists.return_value = True
-        ctx = _make_domain_context()
-        assert calc_has_sso(ctx) is True
 
     def test_true_when_domain_trusts_active_idp(
         self,
@@ -204,7 +195,7 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner,
     ):
         mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.first.return_value = None
+        mock_idp.filter.return_value.exists.return_value = False
         mock_trusted.filter.return_value.exists.return_value = True
         ctx = _make_domain_context()
         assert calc_has_sso(ctx) is True
@@ -216,7 +207,7 @@ class TestCalcHasSso(SimpleTestCase):
         mock_get_owner,
     ):
         mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.first.return_value = None
+        mock_idp.filter.return_value.exists.return_value = False
         mock_trusted.filter.return_value.exists.return_value = False
         ctx = _make_domain_context()
         assert calc_has_sso(ctx) is False
