@@ -248,6 +248,7 @@ def calc_has_sso(domain_context):
     return TrustedIdentityProvider.objects.filter(
         domain=domain_context.domain,
         identity_provider__is_active=True,
+        identity_provider__login_enforcement_type=LoginEnforcementType.GLOBAL,
     ).exists()
 
 

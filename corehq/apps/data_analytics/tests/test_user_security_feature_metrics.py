@@ -1,8 +1,13 @@
 from unittest.mock import MagicMock, patch
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.sso.models import LoginEnforcementType
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    LoginEnforcementType,
+    TrustedIdentityProvider,
+)
+from corehq.apps.sso.tests import generator as sso_generator
 
 from ..feature_calcs import (
     calc_has_2fa_required,
@@ -166,48 +171,77 @@ class TestCalcHasStrongPasswords(SimpleTestCase):
         assert calc_has_strong_passwords(ctx) is False
 
 
-_feature_calcs = 'corehq.apps.data_analytics.feature_calcs'
-@patch(f'{_feature_calcs}.BillingAccount.get_account_by_domain')
-@patch(f'{_feature_calcs}.TrustedIdentityProvider.objects')
-@patch(f'{_feature_calcs}.IdentityProvider.objects')
-class TestCalcHasSso(SimpleTestCase):
-    def test_true_when_billing_account_idp_globally_enforced(
+class TestCalcHasSso(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.account = sso_generator.get_billing_account_for_idp()
+        cls.account.created_by_domain = 'test'
+        cls.account.save()
+        cls.other_account = sso_generator.get_billing_account_for_idp()
+
+    def _create_idp(
         self,
-        mock_idp,
-        mock_trusted,
-        mock_get_owner,
+        account,
+        slug,
+        is_active=True,
+        login_enforcement_type=LoginEnforcementType.GLOBAL,
     ):
-        mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.exists.return_value = True
-        ctx = _make_domain_context()
-        assert calc_has_sso(ctx) is True
-        mock_idp.filter.assert_called_once_with(
-            owner=mock_get_owner.return_value,
-            is_active=True,
-            login_enforcement_type=LoginEnforcementType.GLOBAL,
+        return IdentityProvider.objects.create(
+            owner=account,
+            name=f'IdP {slug}',
+            slug=slug,
+            created_by='admin@dimagi.com',
+            last_modified_by='admin@dimagi.com',
+            is_active=is_active,
+            login_enforcement_type=login_enforcement_type,
         )
-        mock_trusted.filter.assert_not_called()
 
-    def test_true_when_domain_trusts_active_idp(
-        self,
-        mock_idp,
-        mock_trusted,
-        mock_get_owner,
-    ):
-        mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.exists.return_value = False
-        mock_trusted.filter.return_value.exists.return_value = True
-        ctx = _make_domain_context()
-        assert calc_has_sso(ctx) is True
+    def _trust(self, idp):
+        return TrustedIdentityProvider.objects.create(
+            domain='test',
+            identity_provider=idp,
+            acknowledged_by='admin@dimagi.com',
+        )
 
-    def test_false_when_no_sso(
-        self,
-        mock_idp,
-        mock_trusted,
-        mock_get_owner,
-    ):
-        mock_get_owner.return_value = MagicMock()
-        mock_idp.filter.return_value.exists.return_value = False
-        mock_trusted.filter.return_value.exists.return_value = False
-        ctx = _make_domain_context()
-        assert calc_has_sso(ctx) is False
+    def test_true_when_billing_account_has_active_idp_which_is_globally_enforced(self):
+        self._create_idp(self.account, 'owner-active-global')
+        assert calc_has_sso(_make_domain_context()) is True
+
+    def test_false_when_owner_idp_inactive(self):
+        self._create_idp(self.account, 'owner-inactive', is_active=False)
+        assert calc_has_sso(_make_domain_context()) is False
+
+    def test_false_when_owner_idp_not_globally_enforced(self):
+        self._create_idp(
+            self.account,
+            'owner-test',
+            login_enforcement_type=LoginEnforcementType.TEST,
+        )
+        assert calc_has_sso(_make_domain_context()) is False
+
+    def test_true_when_domain_trusts_globally_enforced_idp(self):
+        idp = self._create_idp(self.other_account, 'trusted-active-global')
+        self._trust(idp)
+        assert calc_has_sso(_make_domain_context()) is True
+
+    def test_false_when_trusted_idp_inactive(self):
+        idp = self._create_idp(
+            self.other_account,
+            'trusted-inactive',
+            is_active=False,
+        )
+        self._trust(idp)
+        assert calc_has_sso(_make_domain_context()) is False
+
+    def test_false_when_trusted_idp_not_globally_enforced(self):
+        idp = self._create_idp(
+            self.other_account,
+            'trusted-test',
+            login_enforcement_type=LoginEnforcementType.TEST,
+        )
+        self._trust(idp)
+        assert calc_has_sso(_make_domain_context()) is False
+
+    def test_false_when_no_sso(self):
+        assert calc_has_sso(_make_domain_context()) is False
