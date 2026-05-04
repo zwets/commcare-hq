@@ -1125,7 +1125,8 @@ SECURE_SESSION_TIMEOUT = StaticToggle(
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 
-VELLUM_SAVE_TO_CASE = StaticToggle(
+VELLUM_SAVE_TO_CASE = FrozenPrivilegeToggle(
+    privileges.VELLUM_SAVE_TO_CASE,
     'save_to_case',
     "Adds save to case as a question to the form builder",
     TAG_GA_PATH,
