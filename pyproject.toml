@@ -133,7 +133,6 @@ default-groups = ["dev", "sso"]
 dev = [
     'dependency-metrics',
     'django-extensions',
-    'fixture',
     'git-build-branch',
     'gnureadline',
     'ipython', # for nicer django shell experience
