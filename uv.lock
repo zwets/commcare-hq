@@ -591,7 +591,6 @@ dev = [
     { name = "django-extensions" },
     { name = "fakecouch" },
     { name = "faker" },
-    { name = "fixture" },
     { name = "flaky" },
     { name = "git-build-branch" },
     { name = "gnureadline" },
@@ -755,7 +754,6 @@ dev = [
     { name = "django-extensions" },
     { name = "fakecouch" },
     { name = "faker" },
-    { name = "fixture" },
     { name = "flaky", specifier = ">=3.8" },
     { name = "git-build-branch" },
     { name = "gnureadline" },
@@ -1336,16 +1334,16 @@ wheels = [
 
 [[package]]
 name = "dropbox"
-version = "11.36.2"
+version = "12.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
     { name = "six" },
     { name = "stone" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/0f/2059c5ef8669e625a533661a2054a82241696954df6662aeee51a34b1022/dropbox-11.36.2.tar.gz", hash = "sha256:d48d3d16d486c78b11c14a1c4a28a2611fbf5a0d0a358b861bfd9482e603c500", size = 585092, upload-time = "2023-06-12T23:39:46.394Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9e/56/ac085f58e8e0d0bcafdf98c2605e454ac946e3d0c72679669ae112dc30be/dropbox-12.0.2.tar.gz", hash = "sha256:50057fd5ad5fcf047f542dfc6747a896e7ef982f1b5f8500daf51f3abd609962", size = 560236, upload-time = "2024-06-03T16:45:30.448Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/86/96/1cd39be567d8e361fc06a4135e40ddbf1410f99524771a7f3e5807a26a35/dropbox-11.36.2-py3-none-any.whl", hash = "sha256:a21e4d2bcbeb1d8067ff87969aea48792c9a8266182491153feff2be9c1b9c8f", size = 594038, upload-time = "2023-06-12T23:39:44.245Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/de/95d8204d9a20fbdb353c5f8e4229b0fcb90f22b96f8246ff1f47c8a45fd5/dropbox-12.0.2-py3-none-any.whl", hash = "sha256:c5b7e9c2668adb6b12dcecd84342565dc50f7d35ab6a748d155cb79040979d1c", size = 572076, upload-time = "2024-06-03T16:45:28.153Z" },
 ]
 
 [[package]]
@@ -1424,15 +1422,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/5e/77/1c3ff07b6739b9a1d
 wheels = [
     { url = "https://files.pythonhosted.org/packages/46/ec/91a434c8a53d40c3598966621dea9c50512bec6ce8e76fa1751015e74cef/faker-40.1.2-py3-none-any.whl", hash = "sha256:93503165c165d330260e4379fd6dc07c94da90c611ed3191a0174d2ab9966a42", size = 1985633, upload-time = "2026-01-13T20:51:47.982Z" },
 ]
-
-[[package]]
-name = "fixture"
-version = "1.5.11"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a2/2d/3aac77e169452439bde543f0d2a61a1569f89dd0a562c76463f6168c912d/fixture-1.5.11.tar.gz", hash = "sha256:caf3896fbdb1a83fa0b12defef2f3bafcbdad1d10f8dd1aae26303f749e64612", size = 67136, upload-time = "2017-10-02T10:32:08.6Z" }
 
 [[package]]
 name = "flaky"
@@ -2929,11 +2918,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/a1/7f/a1d4f4c7b66f0fc02
 
 [[package]]
 name = "setuptools"
-version = "80.8.0"
+version = "82.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8d/d2/ec1acaaff45caed5c2dedb33b67055ba9d4e96b091094df90762e60135fe/setuptools-80.8.0.tar.gz", hash = "sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257", size = 1319720, upload-time = "2025-05-20T14:02:53.503Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/db/cfac1baf10650ab4d1c111714410d2fbb77ac5a616db26775db562c8fab2/setuptools-82.0.1.tar.gz", hash = "sha256:7d872682c5d01cfde07da7bccc7b65469d3dca203318515ada1de5eda35efbf9", size = 1152316, upload-time = "2026-03-09T12:47:17.221Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/29/93c53c098d301132196c3238c312825324740851d77a8500a2462c0fd888/setuptools-80.8.0-py3-none-any.whl", hash = "sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0", size = 1201470, upload-time = "2025-05-20T14:02:51.348Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/76/f789f7a86709c6b087c5a2f52f911838cad707cc613162401badc665acfe/setuptools-82.0.1-py3-none-any.whl", hash = "sha256:a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb", size = 1006223, upload-time = "2026-03-09T12:47:15.026Z" },
 ]
 
 [[package]]
