@@ -29,7 +29,10 @@ QUESTIONS = [
                      "instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
                      "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
                      "]/parent_property_1"),
-        'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
+        'constraint': (
+            "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]"
+            "/child_property_1"
+        ),
         'comment': None,
         'setvalue': None,
         'is_group': False,
@@ -233,6 +236,15 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
     def test_has_locked_questions_false(self):
         form = self.app.get_form(self.form_with_repeats_unique_id)
         assert not form.wrapped_xform().has_locked_questions
+
+    def test_get_questions_with_locked_status(self):
+        form = self.app.get_form(self.form_unique_id)
+        questions = form.wrapped_xform().get_questions(['en'], include_locked_status=True)
+
+        locked_question = [q for q in questions if q['value'] == '/data/question2'][0]
+        unlocked_question = [q for q in questions if q['value'] == '/data/question1'][0]
+        self.assertTrue(locked_question['locked'])
+        self.assertFalse(unlocked_question['locked'])
 
     def test_get_questions_with_repeats(self):
         """
