@@ -75,14 +75,24 @@
     <div class="card-body">
       <ul class="nav nav-pills nav-stacked">
         {# todo B5: css-nav #}
-        <li>
-          {% if allow_xform_upload %}
+        {% if allow_xform_upload %}
+          <li>
             <a href="#upload-xform" data-bs-toggle="modal">
               <i class="fa fa-arrow-up"></i>
               {% trans "Upload" %}
             </a>
-          {% endif %}
-        </li>
+          </li>
+        {% else %}
+          <li class="disabled pe-none">
+            <a>
+              <i class="fa fa-arrow-up"></i>
+              {% blocktrans %}
+                This form contains locked questions and can only be uploaded by
+                a user with the locked questions permission.
+              {% endblocktrans %}
+            </a>
+          </li>
+        {% endif %}
         <li>
           <a
             {% if not form.source %}class="disabled"{% endif %}
