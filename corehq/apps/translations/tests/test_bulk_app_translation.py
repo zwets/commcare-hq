@@ -1578,6 +1578,7 @@ class GetLockedLabelIdsTest(SimpleTestCase):
         questions = [
             {'value': '/data/free_q', 'label_ref': 'free_q-label', 'locked': False},
             {'value': '/data/locked_q', 'label_ref': 'locked_q-label', 'locked': True},
+            {'value': '/data/missing_locked_q', 'label_ref': 'missing_locked_q-label', 'locked': True},
         ]
         rows = self._rows('locked_q-label', 'free_q-label')
         with patch.object(self.updater, 'form') as mock_form:
