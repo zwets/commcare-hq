@@ -139,7 +139,8 @@ def run_patches():
 def patch_pkg_resources():
     """Patch pkg_resources for unmaintained eulxml
 
-    The most recent commit to eulxml was 5 years ago as of May 2026.
+    The most recent commit to eulxml was 5 years ago as of May 2026,
+    and pkg_resources was removed from setuptools in early 2026.
     """
     from importlib.abc import Loader, MetaPathFinder
     from importlib.resources import files
