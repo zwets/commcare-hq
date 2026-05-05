@@ -66,7 +66,7 @@
              <i class="fa fa-copy"></i>
              {% trans "Copy" %}
            </button>
-@@ -62,15 +67,17 @@
+@@ -62,21 +67,23 @@
      {% csrf_token %}
      <fieldset></fieldset>
    {% endif %}
@@ -82,10 +82,17 @@
 +    <div class="card-body">
        <ul class="nav nav-pills nav-stacked">
 +        {# todo B5: css-nav #}
-         <li>
-           {% if allow_xform_upload %}
+         {% if allow_xform_upload %}
+           <li>
 -            <a href="#upload-xform" data-toggle="modal">
 +            <a href="#upload-xform" data-bs-toggle="modal">
                <i class="fa fa-arrow-up"></i>
                {% trans "Upload" %}
              </a>
+           </li>
+         {% else %}
+-          <li class="disabled" style="pointer-events: none;">
++          <li class="disabled pe-none">
+             <a>
+               <i class="fa fa-arrow-up"></i>
+               {% blocktrans %}
