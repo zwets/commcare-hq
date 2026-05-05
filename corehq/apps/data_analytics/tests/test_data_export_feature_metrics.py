@@ -25,6 +25,7 @@ def _make_domain_context(form_exports=None, case_exports=None):
         ctx.__dict__['form_exports'] = form_exports
     if case_exports is not None:
         ctx.__dict__['case_exports'] = case_exports
+    ctx.__dict__['all_exports'] = (form_exports or []) + (case_exports or [])
     return ctx
 
 
