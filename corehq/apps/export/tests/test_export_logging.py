@@ -169,7 +169,11 @@ class TestLogExportGenerated(SimpleTestCase):
             case_type="patient",
             tables=[
                 TableConfiguration(label="Main", path=MAIN_TABLE, selected=True, columns=[
-                    ExportColumn(label="Patient Name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
+                    ExportColumn(
+                        label="Patient Name",
+                        item=ExportItem(path=[PathNode(name="name")]),
+                        selected=True,
+                    ),
                     ExportColumn(label="Hidden", item=ExportItem(path=[PathNode(name="x")]), selected=False),
                 ]),
                 TableConfiguration(label="Unselected", path=[PathNode(name="other")], selected=False, columns=[
