@@ -1014,6 +1014,14 @@ msgid "XPath Expression"
 msgstr "Expression de XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr " (Masqué)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr " (Verrouillé)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "Question non identifiée"
 
@@ -1305,6 +1313,48 @@ msgstr "Dernier enregistrement"
 #: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
 msgid "[unknown]"
 msgstr "[inconnu]"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
+msgstr "chargerXFormOuErreur"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#| msgid "Case Property"
+msgid "isPropertyLocked"
+msgstr "estPropriétéVerrouillée"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr "estCheminMugDéplaçable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr "estMugRetirable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr "estTypeMugModifiable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#| msgid "User Properties"
+msgid "getMainProperties"
+msgstr "obtenirPropriétésPrincipales"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "createXML"
+msgstr "createXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getData"
+msgstr "getData"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr "vérifierDéplacement"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "jstree"
+msgstr "jstree"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
 msgid "\n"
@@ -5314,23 +5364,11 @@ msgstr "CommCare HQ n'a pas pu effectuer la requête : "
 #~ msgid "getCurrentMugInput"
 #~ msgstr "obtenirSaisieMugActuelle"
 
-#~ msgid "jstree"
-#~ msgstr "jstree"
-
 #~ msgid "getMugByPath"
 #~ msgstr "getMugByPath"
 
-#~ msgid "getData"
-#~ msgstr "getData"
-
 #~ msgid "loadXML"
 #~ msgstr "chargerXML"
-
-#~ msgid "createXML"
-#~ msgstr "createXML"
-
-#~ msgid "loadXFormOrError"
-#~ msgstr "chargerXFormOuErreur"
 
 #~ msgid "addQuestion"
 #~ msgstr "ajouterQuestion"

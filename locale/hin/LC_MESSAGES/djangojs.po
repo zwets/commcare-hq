@@ -985,6 +985,14 @@ msgid "XPath Expression"
 msgstr "XPath अभिव्यक्ति"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Hidden)"
+msgstr " (छुपा हुआ)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
+msgid " (Locked)"
+msgstr " (लॉक किया गया)"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
 msgstr "अज्ञात प्रश्न"
 
@@ -1272,6 +1280,48 @@ msgstr "नवीनतम सहेजा गया"
 #: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
 msgid "[unknown]"
 msgstr "[अज्ञात]"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "loadXFormOrError"
+msgstr "loadXFormOrError"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#| msgid "Case Property"
+msgid "isPropertyLocked"
+msgstr "isPropertyLocked"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugPathMoveable"
+msgstr "isMugPathMoveable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugRemoveable"
+msgstr "isMugRemoveable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "isMugTypeChangeable"
+msgstr "isMugTypeChangeable"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#| msgid "User Properties"
+msgid "getMainProperties"
+msgstr "getMainProperties"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "createXML"
+msgstr "createXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "getData"
+msgstr "getData"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "checkMove"
+msgstr "checkMove"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+msgid "jstree"
+msgstr "jstree"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/229.js
 msgid "\n"
@@ -5182,23 +5232,11 @@ msgstr "CommCare HQ अनुरोध करने में असमर्थ
 #~ msgid "getCurrentMugInput"
 #~ msgstr "getCurrentMugInput"
 
-#~ msgid "jstree"
-#~ msgstr "jstree"
-
 #~ msgid "getMugByPath"
 #~ msgstr "getMugByPath"
 
-#~ msgid "getData"
-#~ msgstr "getData"
-
 #~ msgid "loadXML"
 #~ msgstr "loadXML"
-
-#~ msgid "createXML"
-#~ msgstr "createXML"
-
-#~ msgid "loadXFormOrError"
-#~ msgstr "loadXFormOrError"
 
 #~ msgid "addQuestion"
 #~ msgstr "प्रश्न जोड़ें"

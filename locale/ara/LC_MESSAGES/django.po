@@ -1123,6 +1123,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/locations/templates/locations/location_types.html
@@ -1206,6 +1207,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/dialogs/bulk_delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
@@ -5281,6 +5283,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -8181,6 +8184,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -9416,28 +9420,38 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "              <strong>Save to Case question is missing a case type.</strong>\n"
+#| "              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
+#| "            "
 msgid ""
 "\n"
-"              <strong>Save to Case question is missing a case type.</strong>\n"
+"              <strong>Advanced Case Actions question is missing a case type.</strong>\n"
 "              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
 "            "
 msgstr ""
 "\n"
-"              <strong>سؤال الحفظ في الحالة يفتقد نوع الحالة.</strong>\n"
+"              <strong>سؤال إجراءات الحالات المتقدمة يفتقد إلى نوع الحالة.</strong>\n"
 "              يرجى إضافة تعيين خاصية \"case_type\" لـ \"%(case_tag)s\"\n"
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "              <strong>Save to Case question is missing a case name.</strong>\n"
+#| "              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
+#| "            "
 msgid ""
 "\n"
-"              <strong>Save to Case question is missing a case name.</strong>\n"
+"              <strong>Advanced Case Actions question is missing a case name.</strong>\n"
 "              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
 "            "
 msgstr ""
 "\n"
-"              <strong>سؤال الحفظ في الحالة يفتقد اسم الحالة.</strong>\n"
+"              <strong>سؤال إجراءات الحالات المتقدمة يفتقد إلى اسم الحالة.</strong>\n"
 "              يرجى إضافة تعيين خاصية \"case_name\" لـ \"%(case_tag)s\"\n"
 "            "
 
@@ -12421,11 +12435,6 @@ msgstr "سير عمل البحث في تطبيقات الويب (سجل البي
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Normal Case List"
-msgstr "قائمة الحالات العادية"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search First"
 msgstr "البحث أولاً"
 
@@ -12440,6 +12449,12 @@ msgstr "عرض المزيد"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Skip to Default Case Search Results"
 msgstr "تخطي إلى نتائج البحث الافتراضية للحالات"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#| msgid "Case Search"
+msgid "Legacy Case Search"
+msgstr "بحث الحالات القديم"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -12465,21 +12480,6 @@ msgstr "ترجمة عنوان شاشة البحث"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "العنوان الفرعي لشاشة البحث"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Search Filter"
-msgstr "مرشح البحث"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Copy case list filter"
-msgstr "نسخ مرشح قائمة الحالات"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-msgid "Example: age > 5"
-msgstr "مثال: العمر > 5"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -15974,6 +15974,11 @@ msgid ""
 "We don't know what to do with the function \"{}\". Accepted functions are: "
 "{}"
 msgstr "لا نعرف ماذا نفعل مع الدالة \"{}\". الدوال المقبولة هي: {}"
+
+#: corehq/apps/case_search/filter_dsl.py
+#| msgid "Include related cases"
+msgid "You cannot query related cases here"
+msgstr "لا يمكنك الاستعلام عن الحالات المرتبطة هنا"
 
 #: corehq/apps/case_search/filter_dsl.py
 #, python-brace-format
@@ -21448,6 +21453,8 @@ msgstr "يرجى تحديد حد لتغذيات OData."
 
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
+#: corehq/apps/enterprise/forms.py
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
@@ -26606,6 +26613,25 @@ msgid "Last Used [UTC]"
 msgstr "آخر استخدام [UTC]"
 
 #: corehq/apps/enterprise/forms.py
+#| msgid "Server Administrator"
+msgid "Add Administrator"
+msgstr "إضافة مسؤول"
+
+#: corehq/apps/enterprise/forms.py
+#| msgid "Dear enterprise administrator,"
+msgid "This user is already an enterprise administrator."
+msgstr "هذا المستخدم هو بالفعل مسؤول مؤسسة."
+
+#: corehq/apps/enterprise/forms.py
+#, python-format
+msgid ""
+"This email domain is not permitted. Enterprise admins must use an email at "
+"one of: %(domains)s"
+msgstr ""
+"هذا نطاق البريد الإلكتروني غير مسموح به. يجب على مسؤولي المؤسسة استخدام بريد"
+" إلكتروني في أحد النطاقات التالية: %(domains)s"
+
+#: corehq/apps/enterprise/forms.py
 msgid "Restrict Project Space Creation"
 msgstr "تقييد إنشاء مساحة مشروع"
 
@@ -26842,6 +26868,40 @@ msgstr "خطأ لوحة معلومات المؤسسات: {}"
 msgid "Enterprise Dashboard: {}"
 msgstr "لوحة معلومات المؤسسات: {}"
 
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
+#| msgid "Dear enterprise administrator,"
+msgid "Enterprise Administrators"
+msgstr "مسؤولو المؤسسة"
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+msgid ""
+"Enterprise Administrators can manage subscriptions, billing, and account-"
+"level settings for all project spaces in this account. See <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
+"Admins\" target=\"_blank\" >Enterprise Console | Enterprise Admins</a > for "
+"more on Enterprise Admins."
+msgstr ""
+"يمكن لمسؤولي المؤسسة إدارة الاشتراكات والفوترة وإعدادات الحساب لجميع مساحات "
+"المشاريع في هذا الحساب. راجع <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945885/Enterprise+Console#Enterprise-"
+"Admins\" target=\"_blank\" >وحدة تحكم المؤسسة | مسؤولو المؤسسة</a > لمزيد من"
+" المعلومات حول مسؤولي المؤسسة."
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#| msgid "Server Administrator"
+msgid "Add an Administrator"
+msgstr "إضافة مسؤول"
+
+#: corehq/apps/enterprise/templates/enterprise/enterprise_admins.html
+#, python-format
+msgid ""
+"This account uses SSO. New administrators must use an email at one of: "
+"%(domains)s."
+msgstr ""
+"يستخدم هذا الحساب تسجيل الدخول الموحد. يجب على المسؤولين الجدد استخدام بريد "
+"إلكتروني في أحد النطاقات التالية: %(domains)s."
+
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 #: corehq/apps/enterprise/views.py corehq/tabs/tabclasses.py
 msgid "Enterprise Permissions"
@@ -26908,6 +26968,23 @@ msgstr ""
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 msgid "Customize Mobile Form Submissions Date Range"
 msgstr "تخصيص نطاق تاريخ إرسال النماذج عبر الجوال"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+#| msgid "Dear enterprise administrator,"
+msgid "Remove enterprise administrator?"
+msgstr "إزالة مسؤول المؤسسة؟"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+#, python-format
+#| msgid "Are you sure you want to remove the grant from %(domain)s to"
+msgid ""
+"Are you sure you want to remove <strong>%(email)s</strong> as an enterprise "
+"administrator?"
+msgstr "هل أنت متأكد أنك تريد إزالة <strong>%(email)s</strong> كمسؤول مؤسسة؟"
+
+#: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
+msgid "There are no enterprise administrators configured for this account."
+msgstr "لا يوجد مسؤولو مؤسسة تم تكوينهم لهذا الحساب."
 
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_permissions_table.html
 msgid "No project spaces found."
@@ -26988,6 +27065,38 @@ msgstr "تعذر إزالة {}."
 #: corehq/apps/enterprise/views.py
 msgid "{} is now excluded from enterprise permissions."
 msgstr "تم استبعاد {} الآن من أذونات المؤسسات."
+
+#: corehq/apps/enterprise/views.py
+#| msgid "Invalid request"
+msgid "Invalid request."
+msgstr "طلب غير صالح."
+
+#: corehq/apps/enterprise/views.py
+#, python-format
+#| msgid "Dear enterprise administrator,"
+msgid "%(email)s has been added as an enterprise administrator."
+msgstr "تمت إضافة %(email)s كمسؤول مؤسسة."
+
+#: corehq/apps/enterprise/views.py
+#| msgid "You cannot remove yourself from a domain via bulk upload"
+msgid "You cannot remove yourself as an enterprise administrator."
+msgstr "لا يمكنك إزالة نفسك كمسؤول مؤسسة."
+
+#: corehq/apps/enterprise/views.py
+msgid "An enterprise account must have at least one administrator."
+msgstr "يجب أن يحتوي حساب المؤسسة على مسؤول واحد على الأقل."
+
+#: corehq/apps/enterprise/views.py
+#, python-format
+#| msgid "Dear enterprise administrator,"
+msgid "%(email)s is not an enterprise administrator."
+msgstr "%(email)s ليس مسؤول مؤسسة."
+
+#: corehq/apps/enterprise/views.py
+#, python-format
+#| msgid "Dear enterprise administrator,"
+msgid "%(email)s has been removed as an enterprise administrator."
+msgstr "تمت إزالة %(email)s كمسؤول مؤسسة."
 
 #: corehq/apps/enterprise/views.py
 msgid "Please select a project."
@@ -47436,6 +47545,10 @@ msgstr ""
 "تجاهل الأعمدة التالية: {columns}"
 
 #: corehq/apps/translations/app_translations/upload_form.py
+msgid "Translation for '{}' was not updated because the question is locked."
+msgstr "لم يتم تحديث الترجمة لـ '{}' لأن السؤال مقفل."
+
+#: corehq/apps/translations/app_translations/upload_form.py
 #, python-brace-format
 msgid "Error in {sheet}: {msg}"
 msgstr "خطأ في {sheet}: {msg}"
@@ -57475,9 +57588,13 @@ msgstr ""
 "إضافة تسلسل المواقع الرئيسية إلى تصدير إكسل في تقرير آخر نشاط للمستخدم"
 
 #: corehq/privileges.py
-#| msgid "Show Advanced Questions"
 msgid "Locked Admin Questions"
 msgstr "أسئلة المسؤول المقفلة"
+
+#: corehq/privileges.py
+#| msgid "Save Case"
+msgid "Save to Case"
+msgstr "حفظ في القضية"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -57656,6 +57773,10 @@ msgstr "لم يعد متوفرًا"
 #: corehq/tabs/tabclasses.py
 msgid "View Location"
 msgstr "عرض الموقع"
+
+#: corehq/tabs/tabclasses.py
+msgid "View and manage the administrators for your enterprise account"
+msgstr "عرض وإدارة المسؤولين لحساب المؤسسة الخاص بك"
 
 #: corehq/tabs/tabclasses.py
 msgid "View project spaces where users receive automatic access"
@@ -58463,6 +58584,18 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Normal Case List"
+#~ msgstr "قائمة الحالات العادية"
+
+#~ msgid "Search Filter"
+#~ msgstr "مرشح البحث"
+
+#~ msgid "Copy case list filter"
+#~ msgstr "نسخ مرشح قائمة الحالات"
+
+#~ msgid "Example: age > 5"
+#~ msgstr "مثال: العمر > 5"
 
 #~ msgid "Property mapping concurrently changed and deleted"
 #~ msgstr "تم تغيير وتعديل تعيين الخاصية في نفس الوقت"
