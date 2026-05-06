@@ -143,6 +143,26 @@ class TestLogExportGenerated(SimpleTestCase):
         assert "bulk" not in data
 
     @patch('corehq.apps.export.export.export_audit_logger')
+    def test_columns_logged_use_question_path_not_label(self, mock_logger):
+        export = _make_form_export(columns=[
+            ExportColumn(
+                label="What is your name?",
+                item=ExportItem(path=[PathNode(name="form"), PathNode(name="name")]),
+                selected=True,
+            ),
+            ExportColumn(
+                label="Child age",
+                item=ExportItem(
+                    path=[PathNode(name="form"), PathNode(name="children"), PathNode(name="age")],
+                ),
+                selected=True,
+            ),
+        ])
+        _log_export_generated(export, row_count=0, logging_context=None)
+
+        assert _logged_data(mock_logger)["columns"] == ["form.name", "form.children.age"]
+
+    @patch('corehq.apps.export.export.export_audit_logger')
     def test_only_selected_columns_from_selected_tables(self, mock_logger):
         export = CaseExportInstance(
             domain="test-domain",
