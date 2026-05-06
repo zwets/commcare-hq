@@ -229,6 +229,14 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
 
         self.assertEqual(questions, QUESTIONS)
 
+    def test_has_locked_questions_true(self):
+        form = self.app.get_form(self.form_unique_id)
+        assert form.wrapped_xform().has_locked_questions
+
+    def test_has_locked_questions_false(self):
+        form = self.app.get_form(self.form_with_repeats_unique_id)
+        assert not form.wrapped_xform().has_locked_questions
+
     def test_get_questions_with_locked_status(self):
         form = self.app.get_form(self.form_unique_id)
         questions = form.wrapped_xform().get_questions(['en'], include_locked_status=True)

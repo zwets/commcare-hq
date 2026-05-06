@@ -701,6 +701,17 @@ class XForm(WrappedNode):
         return self.model_node.findall('{f}bind')
 
     @property
+    def has_locked_questions(self):
+        """Whether any binds in this form's XML are locked (``vellum:lock="all"``)."""
+        if not self.exists():
+            return False
+        try:
+            binds = self.bind_nodes
+        except XFormException:
+            return False
+        return any(bind.attrib.get('{v}lock') == 'all' for bind in binds)
+
+    @property
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.

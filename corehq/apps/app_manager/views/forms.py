@@ -14,6 +14,7 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -335,6 +336,15 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form.comment = request.POST['comment']
 
     if should_edit("xform") or "xform" in request.FILES:
+        if "xform" in request.FILES and not _allow_xform_upload(
+            request, domain, form.wrapped_xform().has_locked_questions
+        ):
+            error = _("You do not have permission to upload an XForm for a form "
+                      "that contains locked questions.")
+            if ajax:
+                return HttpResponseForbidden(error)
+            messages.error(request, error)
+            return back_to_main(request, domain, app_id=app_id)
         try:
             # support FILES for upload and POST for ajax post from Vellum
             try:
@@ -742,6 +752,10 @@ def get_form_view_context(
         logging.exception(e)
         form_errors.append("Unexpected error in form: %s" % e)
 
+    # Capture this before ``form.add_stuff_to_xform`` below strips vellum
+    # namespace attributes (including ``vellum:lock``) from the xform.
+    has_locked_questions = xform and xform.has_locked_questions
+
     has_case_error = False
     if xform and xform.exists():
         if xform.already_has_meta():
@@ -878,6 +892,7 @@ def get_form_view_context(
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
+        'allow_xform_upload': _allow_xform_upload(request, domain, has_locked_questions),
         'allow_form_filtering': not form_has_schedule,
         'allow_usercase': allow_usercase,
         'is_module_filter_enabled': app.enable_module_filtering,
@@ -965,6 +980,17 @@ def get_form_view_context(
 
     context.update({'case_config_options': case_config_options})
     return context
+
+
+def _allow_xform_upload(request, domain, has_locked_questions):
+    if not (
+        domain_has_privilege(domain, "locked_admin_questions")
+        and toggles.LOCKED_ADMIN_QUESTIONS.enabled_for_request(request)
+    ):
+        return True
+    if request.couch_user.can_edit_locked_questions_in_apps(domain):
+        return True
+    return not has_locked_questions
 
 
 def _get_case_property_limit(domain):
