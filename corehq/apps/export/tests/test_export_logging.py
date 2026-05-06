@@ -39,9 +39,9 @@ def _make_case_export(case_type="patient"):
             path=MAIN_TABLE,
             selected=True,
             columns=[
-                ExportColumn(label="name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
-                ExportColumn(label="dob", item=ExportItem(path=[PathNode(name="dob")]), selected=True),
-                ExportColumn(label="hidden", item=ExportItem(path=[PathNode(name="hidden")]), selected=False),
+                ExportColumn(label="Patient Name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
+                ExportColumn(label="Date of Birth", item=ExportItem(path=[PathNode(name="dob")]), selected=True),
+                ExportColumn(label="Hidden", item=ExportItem(path=[PathNode(name="hidden")]), selected=False),
             ],
         )],
     )
@@ -149,11 +149,11 @@ class TestLogExportGenerated(SimpleTestCase):
             case_type="patient",
             tables=[
                 TableConfiguration(label="Main", path=MAIN_TABLE, selected=True, columns=[
-                    ExportColumn(label="name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
-                    ExportColumn(label="hidden", item=ExportItem(path=[PathNode(name="x")]), selected=False),
+                    ExportColumn(label="Patient Name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
+                    ExportColumn(label="Hidden", item=ExportItem(path=[PathNode(name="x")]), selected=False),
                 ]),
                 TableConfiguration(label="Unselected", path=[PathNode(name="other")], selected=False, columns=[
-                    ExportColumn(label="ignored", item=ExportItem(path=[PathNode(name="y")]), selected=True),
+                    ExportColumn(label="Ignored", item=ExportItem(path=[PathNode(name="y")]), selected=True),
                 ]),
             ],
         )
